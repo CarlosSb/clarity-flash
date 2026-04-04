@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-bg text-text font-sans min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .bento-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .card {
+    @apply bg-card rounded-xl border border-card-border p-5 transition-all duration-200 hover:border-primary-muted hover:shadow-lg hover:shadow-primary-muted/10;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-card-border px-4 py-2.5 font-medium text-text transition-all duration-200 hover:bg-card-hover active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success/15 text-success;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning/15 text-warning;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger/15 text-danger;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-muted text-primary-light;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-card-border;
+  }
+}
+
+@layer utilities {
+  .flip-card-perspective {
+    perspective: 1000px;
+  }
+
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+
+  .flip-card-inner.is-flipped {
+    transform: rotateY(180deg);
+  }
+
+  .flip-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .flip-card-back {
+    transform: rotateY(180deg);
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent;
+  }
+}

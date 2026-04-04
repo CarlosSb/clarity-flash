@@ -1,0 +1,37 @@
+# --- Go ---
+backend/bin/
+backend/server
+backend/worker
+backend/migrate
+*.exe
+
+# --- Node / Vue ---
+frontend/node_modules/
+frontend/dist/
+*.local
+
+# --- Env ---
+.env
+.env.local
+.env.*.local
+
+# --- IDE ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+npm-debug.log*
+
+# --- Temp ---
+/tmp/aulaflash-uploads/
+
+# --- Testing ---
+coverage.out
