@@ -35,7 +35,7 @@ func Load() *Config {
 		}
 	}
 
-	port := 8080
+	port := 8081
 	if p := os.Getenv("SERVER_PORT"); p != "" {
 		if val, err := strconv.Atoi(p); err == nil {
 			port = val
