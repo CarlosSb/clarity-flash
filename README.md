@@ -1,33 +1,53 @@
-# AulaFlash
+# ClarityFlash
 
-Grava sua aula ou reuniao e transforma em resumo profissional + flashcards inteligentes de forma discreta e automatica.
+Grava sua aula ou reunião e transforma em resumo claro + flashcards inteligentes de forma discreta e automática.
 
-## Visão
+## Visão Geral
 
-O melhor assistente brasileiro para quem assiste aulas e reunioes (Zoom, Google Meet, Teams) e quer de forma automatica:
+O ClarityFlash é um assistente inteligente que escuta aulas e reuniões (Zoom, Google Meet, Teams) e entrega automaticamente:
+- Resumo profissional claro e acionável
+- Flashcards inteligentes para revisão rápida
 
-- **Resumo profissional** claro, com action items, decisoes e destaques
-- **Flashcards inteligentes** para revisao rapida
-- **Modo Quiz** para testar conhecimento
+O produto foi projetado para servir tanto **estudantes** quanto **profissionais em home office**, com foco em simplicidade, discrição e qualidade em português brasileiro.
 
-Serve para **estudantes** e **profissionais em home office**.
+## Funcionalidades Principais
 
-## Stack
+### MVP
+- Gravação de áudio via Chrome Extension (captura discreta da aba)
+- Transcrição automática com boa qualidade em PT-BR
+- Geração de resumo profissional (com action items, decisões e destaques)
+- Geração automática de 10-15 flashcards
+- Interface com animação de flip card
+- Modo Quiz básico
+- Exportação (CSV para Anki, texto simples, WhatsApp/Email)
 
-| Camada | Tecnologia |
-|---|---|
-| Frontend | Vue 3 (Composition API) + Vite + Tailwind CSS + Pinia |
-| Backend | Go (Gin) |
-| Banco | PostgreSQL 15+ |
-| Captura de audio | Chrome Extension (Manifest V3) com `chrome.tabCapture` |
-| STT | Groq Whisper (prioridade) / fallback Whisper local |
-| LLM | Hugging Face Inference (Llama 3.1 8B / Qwen2.5 7B) ou Ollama |
-| Real-time | WebSocket |
+### Versão 1.0
+- Assistente Inteligente leve em tempo real
+- Modos: "Estudante" e "Profissional"
+- Cache básico de resumos e flashcards
+- Dark mode completo
+
+## Stack Tecnológico
+
+**Frontend:**
+- Vue 3 + Vite + Tailwind CSS + Pinia
+
+**Backend:**
+- Go (Gin/Fiber)
+- PostgreSQL
+- WebSocket
+
+**IA:**
+- STT: Groq Whisper
+- LLM: Hugging Face Inference (Llama 3.1 8B) ou Ollama
+
+**Captura de áudio:**
+- Chrome Extension (Manifest V3) com `chrome.tabCapture`
 
 ## Estrutura do Projeto
 
 ```
-clarityflash/
+clarity-flash/
 ├── frontend/              # Vue 3 SPA
 │   ├── src/
 │   │   ├── components/    # Bento grid, flashcards, quiz, layout
