@@ -18,7 +18,7 @@ func NewSessionRepository(db *sql.DB) *SessionRepository {
 
 func (r *SessionRepository) Create(ctx context.Context, s *repository.Session) error {
 	query := `INSERT INTO sessions (id, user_id, title, status, mode, created_at, updated_at)
-			  VALUES ($1, $2, $3, $4, $5, $6, $7)`
+				  VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	now := time.Now()
 	_, err := r.db.ExecContext(ctx, query,
 		s.ID, s.UserID, s.Title, s.Status, s.Mode, now, now)
@@ -27,20 +27,29 @@ func (r *SessionRepository) Create(ctx context.Context, s *repository.Session) e
 
 func (r *SessionRepository) GetByID(ctx context.Context, id string) (*repository.Session, error) {
 	s := &repository.Session{}
+	var desc, audioPath, transcript, summaryData sql.NullString
 	query := `SELECT id, user_id, title, description, duration, status, mode,
-			  created_at, updated_at, transcript, audio_path, summary_data
-			  FROM sessions WHERE id = $1`
+				  created_at, updated_at, transcript, audio_path, summary_data
+				  FROM sessions WHERE id = $1`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&s.ID, &s.UserID, &s.Title, &s.Description, &s.Duration,
+		&s.ID, &s.UserID, &s.Title, &desc, &s.Duration,
 		&s.Status, &s.Mode, &s.CreatedAt, &s.UpdatedAt,
-		&s.Transcript, &s.AudioPath, &s.SummaryData)
+		&transcript, &audioPath, &summaryData)
+	s.Description = nullString(desc)
+	s.Transcript = transcript
+	s.AudioPath = audioPath
+	s.SummaryData = summaryData
 	return s, err
 }
 
 func (r *SessionRepository) ListByUser(ctx context.Context, userID string, limit, offset int) ([]repository.Session, error) {
-	query := `SELECT id, user_id, title, description, duration, status, mode,
-			  created_at, updated_at FROM sessions
-			  WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT s.id, s.user_id, s.title, s.description, s.duration, s.status, s.mode,
+				  s.created_at, s.updated_at, COUNT(f.id)::int as flashcard_count
+				  FROM sessions s
+				  LEFT JOIN flashcards f ON f.session_id = s.id
+				  WHERE s.user_id = $1
+				  GROUP BY s.id
+				  ORDER BY s.created_at DESC LIMIT $2 OFFSET $3`
 	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
 	if err != nil {
 		return nil, err
@@ -50,10 +59,14 @@ func (r *SessionRepository) ListByUser(ctx context.Context, userID string, limit
 	var sessions []repository.Session
 	for rows.Next() {
 		var s repository.Session
-		if err := rows.Scan(&s.ID, &s.UserID, &s.Title, &s.Description,
-			&s.Duration, &s.Status, &s.Mode, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		var desc sql.NullString
+		if err := rows.Scan(
+			&s.ID, &s.UserID, &s.Title, &desc,
+			&s.Duration, &s.Status, &s.Mode, &s.CreatedAt, &s.UpdatedAt, &s.FlashcardCount,
+		); err != nil {
 			return nil, err
 		}
+		s.Description = nullString(desc)
 		sessions = append(sessions, s)
 	}
 	return sessions, nil
@@ -86,4 +99,11 @@ func (r *SessionRepository) UpdateFlashcards(ctx context.Context, id string, dat
 func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM sessions WHERE id = $1`, id)
 	return err
+}
+
+func nullString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
 }
