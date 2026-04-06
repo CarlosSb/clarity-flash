@@ -35,15 +35,15 @@ O produto atende tanto **estudantes** quanto **profissionais em home office**, c
 | godotenv | 1.5.1 |
 
 ### IA / Modelos
-| Função | Provedor | Modelo |
-|---|---|---|
-| **Transcrição (STT)** | Groq Whisper | `whisper-large-v3` |
-| **Geração de Conteúdo (LLM)** | Hugging Face Inference API | `meta-llama/llama-3.1-8b-instruct` |
-| **LLM Alternativo** | Ollama (local) | Configurável via `.env` |
+| Função | Provedor | Modelo | Config |
+|---|---|---|---|
+| **Transcrição (STT)** | Groq Whisper | `whisper-large-v3` | `GROQ_MODEL` |
+| **Geração de Conteúdo (LLM)** | Groq LLM | `llama-3.1-8b-instant` | `LLM_MODEL` |
+| **LLM Alternativo** | Ollama (local) | Configurável | `USE_OLLAMA=true` |
 
 - **Transcrição**: Groq Whisper Large V3 — converte áudio em texto em português (PT-BR)
-- **Resumo**: Llama 3.1 8B Instruct — gera resumos profissionais com highlights, decisões, action items e conceitos-chave
-- **Flashcards**: Llama 3.1 8B Instruct — cria 10-15 cards com estrutura front/back/difficulty
+- **Resumo**: Llama 3.1 8B Instruct via Groq API — gera resumos profissionais com highlights, decisões, action items e conceitos-chave
+- **Flashcards**: Llama 3.1 8B Instruct via Groq API — cria 10-15 cards com estrutura front/back/difficulty
 - Prompts em português brasileiro com formato de saída JSON forçado
 - Modelos configuráveis via `.env`: `GROQ_MODEL` e `LLM_MODEL`
 
@@ -67,11 +67,11 @@ O produto atende tanto **estudantes** quanto **profissionais em home office**, c
 
 ```bash
 # Criar banco local
-createdb aulaflash
+createdb clarityflash
 
 # Executar migrações
-psql aulaflash < backend/migrations/001_initial.sql
-psql aulaflash < backend/migrations/002_add_auth.sql
+psql clarityflash < backend/migrations/001_initial.sql
+psql clarityflash < backend/migrations/002_add_auth.sql
 
 # Ou via Makefile
 make -C backend migrate
@@ -107,15 +107,17 @@ A aplicação fica disponível em `http://localhost:5173`.
 4. Selecione a pasta `extension/`
 5. Clique no ícone da extensão para iniciar a gravação da aba ativa
 
-### Comandos Disponíveis (Makefile)
+### CLI do Projeto
+
+O projeto inclui uma CLI para tarefas comuns via Makefile:
 
 | Comando | Descrição |
 |---|---|
-| `make run` | Executa o servidor em modo desenvolvimento |
-| `make build` | Compila o binário em `bin/aulaflash` |
-| `make migrate` | Executa as migrações do banco |
-| `make test` | Roda os testes |
-| `make clean` | Remove binários e uploads temporários |
+| `make -C backend run` | Executa o servidor em modo desenvolvimento |
+| `make -C backend build` | Compila o binário em `backend/bin/clarityflash` |
+| `make -C backend migrate` | Executa as migrações do banco |
+| `make -C backend test` | Roda os testes |
+| `make -C backend clean` | Remove binários e uploads temporários |
 
 ## Fluxo de Uso
 
@@ -225,13 +227,14 @@ clarity-flash/
 - ✅ Backend API em Go com Clean Architecture
 - ✅ Upload de áudio (arquivo completo e streaming)
 - ✅ Transcrição com Groq Whisper Large V3
-- ✅ Geração de resumo com Llama 3.1 8B (Hugging Face)
+- ✅ Geração de resumo com Llama 3.1 8B (via Groq API)
 - ✅ Geração de flashcards (10-15 cards por sessão)
-- ✅ PostgreSQL com migrações (users, sessions, flashcards)
+- ✅ PostgreSQL com migrações
 - ✅ WebSocket para atualizações em tempo real
 - ✅ Frontend Vue 3 com Tailwind CSS
 - ✅ Sistema básico de autenticação (JWT + fallback)
 - ✅ Exportação (CSV para Anki, TXT)
+- ✅ CLI do projeto (Makefile)
 - ⚠️ Componentes de Flashcard (FlipCard, DeckList) — necessita testes
 - ⚠️ Modo Quiz — necessita testes
 - ❌ Assistente IA em tempo real (planejado para v1.0)
@@ -247,7 +250,7 @@ clarity-flash/
 - **PostgreSQL** — gerenciamento de banco de dados e migrações SQL
 - **WebSockets** — comunicação em tempo real
 - **Chrome Extension (Manifest V3)** — captura de áudio com tabCapture API
-- **Integração com IA/LLM** — Groq API, Hugging Face Inference, prompt engineering
+- **Integração com IA/LLM** — Groq API, prompt engineering
 - **Processamento de áudio** — conversão WAV, streaming, validação
 
 ## Configuração do .env
@@ -255,23 +258,22 @@ clarity-flash/
 ```env
 # Backend
 SERVER_PORT=8081
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/aulaflash?sslmode=disable
-UPLOAD_DIR=/tmp/aulaflash-uploads
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/clarityflash?sslmode=disable
+UPLOAD_DIR=/tmp/clarityflash-uploads
 
-# Groq (STT)
+# Groq API (Transcrição + LLM - mesmo token)
+# Obtenha sua chave em: https://console.groq.com
 GROQ_API_KEY=sua_chave_aqui
 GROQ_MODEL=whisper-large-v3
+LLM_MODEL=llama-3.1-8b-instant
 
-# LLM (HuggingFace ou Ollama)
-HUGGING_FACE_TOKEN=sua_chave_aqui
-LLM_MODEL=meta-llama/llama-3.1-8b-instruct
-
-# Ollama (alternativa local)
+# Ollama (alternativa local ao Groq LLM)
 USE_OLLAMA=false
 OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1:8b
 
-# Auth (opcional)
-API_KEY=sua_chave_aqui
+# Auth
+JWT_SECRET=altere_esta_chave_para_um_valor_seguro_e_aleatorio
 ```
 
 ## Licença

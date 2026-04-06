@@ -6,7 +6,7 @@ run:
 
 # Build
 build:
-	go build -o bin/aulaflash cmd/server/main.go
+	go build -o bin/clarityflash cmd/server/main.go
 
 # Run migrations
 migrate:
@@ -19,4 +19,4 @@ test:
 # Clean
 clean:
 	rm -rf bin/
-	rm -rf /tmp/aulaflash-uploads
+	rm -rf /tmp/clarityflash-uploads

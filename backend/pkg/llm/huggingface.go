@@ -15,6 +15,77 @@ type LLMClient interface {
 	Generate(ctx context.Context, prompt string) (string, error)
 }
 
+// GroqLLMClient client para Groq LLM API (Llama, etc)
+type GroqLLMClient struct {
+	APIKey string
+	Model  string
+}
+
+func NewGroqLLMClient(apiKey, model string) *GroqLLMClient {
+	return &GroqLLMClient{
+		APIKey: apiKey,
+		Model:  model,
+	}
+}
+
+// Generate envia prompt ao modelo Groq LLM
+func (c *GroqLLMClient) Generate(ctx context.Context, prompt string) (string, error) {
+	payload := map[string]interface{}{
+		"model": c.Model,
+		"messages": []map[string]string{
+			{"role": "user", "content": prompt},
+		},
+		"temperature": 0.3,
+		"max_tokens":  2048,
+	}
+
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal payload: %w", err)
+	}
+
+	url := "https://api.groq.com/openai/v1/chat/completions"
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(payloadJSON))
+	if err != nil {
+		return "", fmt.Errorf("criar request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request groq llm: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("ler resposta: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("groq llm error %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", fmt.Errorf("decode response: %w", err)
+	}
+
+	if len(result.Choices) == 0 {
+		return "", fmt.Errorf("resposta vazia do Groq LLM")
+	}
+
+	return strings.TrimSpace(result.Choices[0].Message.Content), nil
+}
+
 // HuggingFaceClient client para Hugging Face Inference API
 type HuggingFaceClient struct {
 	Token string

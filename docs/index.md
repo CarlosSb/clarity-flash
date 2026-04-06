@@ -56,14 +56,14 @@ O produto atende tanto **estudantes** quanto **profissionais em home office**, c
 | Função | Provedor | Modelo | Configuração |
 |---|---|---|---|
 | **Transcrição (STT)** | Groq Whisper | `whisper-large-v3` | `GROQ_MODEL` |
-| **Geração de Conteúdo (LLM)** | Hugging Face Inference API | `meta-llama/llama-3.1-8b-instruct` | `LLM_MODEL` |
+| **Geração de Conteúdo (LLM)** | Groq LLM | `llama-3.1-8b-instant` | `LLM_MODEL` |
 | **LLM Alternativo** | Ollama (local) | Configurável | `USE_OLLAMA=true` |
 
 **Detalhes dos Modelos:**
 
 - **Transcrição**: Groq Whisper Large V3 — converte áudio em texto em português brasileiro (PT-BR). O parâmetro `language` é fixado como `"pt"` na requisição.
-- **Resumo**: Llama 3.1 8B Instruct via Hugging Face Inference API — gera resumos profissionais com estrutura JSON contendo: título, descrição, highlights, decisões, action items e conceitos-chave.
-- **Flashcards**: Llama 3.1 8B Instruct — cria 10-15 cards com estrutura `{front, back, difficulty}` onde difficulty varia de 1 (fácil) a 3 (difícil).
+- **Resumo**: Llama 3.1 8B Instruct via Groq API — gera resumos profissionais com estrutura JSON contendo: título, descrição, highlights, decisões, action items e conceitos-chave.
+- **Flashcards**: Llama 3.1 8B Instruct via Groq API — cria 10-15 cards com estrutura `{front, back, difficulty}` onde difficulty varia de 1 (fácil) a 3 (difícil).
 - **Prompts** são em português brasileiro e exigem formato de saída JSON puro (sem markdown adicional).
 - **Fallback**: Ollama local pode ser ativado definindo `USE_OLLAMA=true` no `.env`.
 
@@ -86,20 +86,20 @@ O produto atende tanto **estudantes** quanto **profissionais em home office**, c
 │  (tabCapture)   │   WebSocket / HTTP     │   (:8081)        │
 └─────────────────┘                       └────────┬─────────┘
                                                    │
-                                    ┌──────────────┼──────────────┐
-                                    │              │              │
-                                    ▼              ▼              ▼
-                           ┌─────────────┐ ┌─────────────┐ ┌──────────┐
-                           │ Groq Whisper│ │  LLM (HF)   │ │PostgreSQL│
-                           │   (STT)     │ │  ou Ollama  │ │  (Neon)  │
-                           └─────────────┘ └─────────────┘ └──────────┘
-                                                   │
-                                    ┌──────────────┴──────────────┐
-                                    ▼                             ▼
-                           ┌──────────────┐              ┌──────────────┐
-                           │  Frontend    │              │  WebSocket   │
-                           │  Vue 3 (:5173)│              │  Hub         │
-                           └──────────────┘              └──────────────┘
+                                     ┌─────────────┴─────────────┐
+                                     │                           │
+                                     ▼                           ▼
+                            ┌─────────────┐             ┌──────────┐
+                            │ Groq API    │             │PostgreSQL│
+                            │ (STT + LLM) │             │  (Neon)  │
+                            └─────────────┘             └──────────┘
+                                     │
+                                     │
+                                     ▼
+                            ┌──────────────┐
+                            │  Frontend    │
+                            │  Vue 3 (:5173)│
+                            └──────────────┘
 ```
 
 ### 4.2 Pipeline de Processamento
@@ -111,11 +111,11 @@ O fluxo de processamento de áudio segue estas etapas:
 3. **Validação**: Backend valida que o arquivo é áudio válido
 4. **Conversão**: Áudio convertido para WAV (formato exigido pelo Groq Whisper)
 5. **Transcrição**: Groq Whisper converte WAV em texto (PT-BR)
-6. **Resumo**: LLM gera resumo estruturado em JSON a partir da transcrição
-7. **Flashcards**: LLM gera 10-15 flashcards em JSON a partir da transcrição
+6. **Resumo**: Groq LLM (Llama 3.1 8B) gera resumo estruturado em JSON a partir da transcrição
+7. **Flashcards**: Groq LLM (Llama 3.1 8B) gera 10-15 flashcards em JSON a partir da transcrição
 8. **Persistência**: Dados salvos no PostgreSQL
 9. **Limpeza**: Arquivo de áudio original é deletado (privacidade)
-10. **Notificação**: Status atualizado via WebSocket para o frontend
+10. **Notificação**: Status atualizado para o frontend
 
 ### 4.3 Estrutura de Diretórios
 
@@ -347,12 +347,12 @@ curl http://localhost:8081/api/export/session123/csv \
 
 ### 7.2 Geração de Resumo
 
-**Modelo**: `meta-llama/llama-3.1-8b-instruct`  
-**Endpoint**: `https://api-inference.huggingface.co/models/{model}`  
+**Modelo**: `llama-3.1-8b-instant` via Groq API  
+**Endpoint**: `https://api.groq.com/openai/v1/chat/completions`  
 **Parâmetros**:
-- `max_new_tokens`: 2048
+- `model`: `llama-3.1-8b-instant`
 - `temperature`: 0.3
-- `return_full_text`: false
+- `max_tokens`: 2048
 
 **Prompt** (definido em `backend/internal/domain/model/summary.go`):
 ```
@@ -384,7 +384,7 @@ Formato esperado:
 
 ### 7.3 Geração de Flashcards
 
-**Modelo**: `meta-llama/llama-3.1-8b-instruct` (mesmo cliente do resumo)
+**Modelo**: `llama-3.1-8b-instant` via Groq API (mesmo cliente do resumo)
 
 **Prompt** (definido em `backend/internal/domain/model/flashcard.go`):
 ```
@@ -552,13 +552,14 @@ api.interceptors.request.use((config) => {
 - ✅ Backend API em Go com Clean Architecture
 - ✅ Upload de áudio (arquivo completo e streaming via WebSocket/HTTP)
 - ✅ Transcrição com Groq Whisper Large V3
-- ✅ Geração de resumo com Llama 3.1 8B (Hugging Face Inference API)
+- ✅ Geração de resumo com Llama 3.1 8B (via Groq API)
 - ✅ Geração de flashcards (10-15 cards por sessão)
 - ✅ PostgreSQL com migrações (users, sessions, flashcards + auth)
 - ✅ WebSocket para atualizações em tempo real
 - ✅ Frontend Vue 3 com Tailwind CSS
 - ✅ Sistema básico de autenticação (JWT + fallback X-User-ID)
 - ✅ Exportação (CSV para Anki, TXT)
+- ✅ CLI do projeto (Makefile)
 - ⚠️ Componentes de Flashcard (FlipCard, DeckList) — necessita testes
 - ⚠️ Modo Quiz — necessita testes
 - ❌ Assistente IA em tempo real (planejado para v1.0)
@@ -576,6 +577,7 @@ api.interceptors.request.use((config) => {
 - Transcrição + Resumo + Flashcards
 - Interface Vue básica com flashcards e quiz
 - Exportação CSV/TXT
+- CLI do projeto (Makefile)
 
 ### Versão 1.0
 - Assistente Inteligente leve em tempo real (dicas, action items, sugestões)
@@ -599,16 +601,15 @@ api.interceptors.request.use((config) => {
 - Go 1.21+
 - PostgreSQL 15+ (ou conta Neon DB)
 - Chave de API Groq (https://console.groq.com)
-- Chave de API Hugging Face (ou Ollama local)
 - Chrome/Brave browser
 
 ### Passo a Passo
 
 **1. Banco de Dados**
 ```bash
-createdb aulaflash
-psql aulaflash < backend/migrations/001_initial.sql
-psql aulaflash < backend/migrations/002_add_auth.sql
+createdb clarityflash
+psql clarityflash < backend/migrations/001_initial.sql
+psql clarityflash < backend/migrations/002_add_auth.sql
 # Ou: make -C backend migrate
 ```
 
@@ -635,15 +636,17 @@ npm run dev
 3. Clique em **Carregar sem compactação**
 4. Selecione a pasta `extension/`
 
-### Comandos do Makefile
+### CLI do Projeto (Makefile)
+
+O projeto inclui uma CLI via Makefile para tarefas comuns:
 
 | Comando | Descrição |
 |---|---|
-| `make run` | Executa servidor em modo desenvolvimento |
-| `make build` | Compila binário em `bin/aulaflash` |
-| `make migrate` | Executa migrações do banco |
-| `make test` | Roda testes (`go test -v ./...`) |
-| `make clean` | Remove binários e uploads temporários |
+| `make -C backend run` | Executa servidor em modo desenvolvimento |
+| `make -C backend build` | Compila binário em `backend/bin/clarityflash` |
+| `make -C backend migrate` | Executa migrações do banco |
+| `make -C backend test` | Roda testes (`go test -v ./...`) |
+| `make -C backend clean` | Remove binários e uploads temporários |
 
 ---
 
@@ -652,23 +655,22 @@ npm run dev
 ```env
 # Backend
 SERVER_PORT=8081
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/aulaflash?sslmode=disable
-UPLOAD_DIR=/tmp/aulaflash-uploads
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/clarityflash?sslmode=disable
+UPLOAD_DIR=/tmp/clarityflash-uploads
 
-# Groq (STT)
+# Groq API (Transcrição + LLM - mesmo token)
+# Obtenha sua chave em: https://console.groq.com
 GROQ_API_KEY=sua_chave_aqui
 GROQ_MODEL=whisper-large-v3
+LLM_MODEL=llama-3.1-8b-instant
 
-# LLM (HuggingFace ou Ollama)
-HUGGING_FACE_TOKEN=sua_chave_aqui
-LLM_MODEL=meta-llama/llama-3.1-8b-instruct
-
-# Ollama (alternativa local)
+# Ollama (alternativa local ao Groq LLM)
 USE_OLLAMA=false
 OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1:8b
 
-# Auth (opcional)
-API_KEY=sua_chave_aqui
+# Auth
+JWT_SECRET=altere_esta_chave_para_um_valor_seguro_e_aleatorio
 ```
 
 ---
@@ -680,12 +682,72 @@ API_KEY=sua_chave_aqui
 - **PostgreSQL** — gerenciamento de banco de dados, migrações SQL, JSONB
 - **WebSockets** — comunicação em tempo real (gorilla/websocket)
 - **Chrome Extension (Manifest V3)** — captura de áudio com tabCapture API, service workers
-- **Integração com IA/LLM** — Groq API, Hugging Face Inference, Ollama, prompt engineering
+- **Integração com IA/LLM** — Groq API, prompt engineering
 - **Processamento de áudio** — conversão WAV, streaming, validação de formato
+
+## 17. CLI do Projeto
+
+O projeto inclui uma CLI via Makefile para tarefas comuns de desenvolvimento:
+
+### Comandos Disponíveis
+
+| Comando | Descrição |
+|---|---|
+| `make -C backend run` | Executa o servidor em modo desenvolvimento |
+| `make -C backend build` | Compila o binário em `backend/bin/clarityflash` |
+| `make -C backend migrate` | Executa as migrações do banco de dados |
+| `make -C backend test` | Roda todos os testes |
+| `make -C backend clean` | Remove binários e arquivos temporários |
+
+### Exemplos de Uso
+
+```bash
+# Iniciar o servidor em modo desenvolvimento
+make -C backend run
+
+# Compilar o binário de produção
+make -C backend build
+
+# Executar migrações do banco
+make -C backend migrate
+
+# Limpar arquivos temporários
+make -C backend clean
+```
+
+## 17. CLI do Projeto
+
+O projeto inclui uma CLI via Makefile para tarefas comuns de desenvolvimento:
+
+### Comandos Disponíveis
+
+| Comando | Descrição |
+|---|---|
+| `make -C backend run` | Executa o servidor em modo desenvolvimento |
+| `make -C backend build` | Compila o binário em `backend/bin/clarityflash` |
+| `make -C backend migrate` | Executa as migrações do banco de dados |
+| `make -C backend test` | Roda todos os testes |
+| `make -C backend clean` | Remove binários e arquivos temporários |
+
+### Exemplos de Uso
+
+```bash
+# Iniciar o servidor em modo desenvolvimento
+make -C backend run
+
+# Compilar o binário de produção
+make -C backend build
+
+# Executar migrações do banco
+make -C backend migrate
+
+# Limpar arquivos temporários
+make -C backend clean
+```
 
 ---
 
-## 17. Regras de Desenvolvimento
+## 18. Regras de Desenvolvimento
 
 - Priorizar simplicidade e velocidade de entrega
 - Manter o código modular, limpo e bem documentado
@@ -696,7 +758,7 @@ API_KEY=sua_chave_aqui
 
 ---
 
-## 18. Fluxo de Uso Completo
+## 19. Fluxo de Uso Completo
 
 1. **Iniciar gravação**: Abra uma reunião/aula no navegador, clique no ícone do ClarityFlash e inicie a gravação
 2. **Processamento automático**: Ao terminar, o áudio é enviado ao backend que executa: transcrição → resumo → flashcards
@@ -708,6 +770,6 @@ API_KEY=sua_chave_aqui
 
 ---
 
-## 19. Licença
+## 20. Licença
 
 MIT

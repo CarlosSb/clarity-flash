@@ -46,17 +46,17 @@ func Load() *Config {
 
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
-		uploadDir = "/tmp/aulaflash-uploads"
+		uploadDir = "/tmp/clarityflash-uploads"
 	}
 
 	return &Config{
 		ServerPort:       port,
-		DatabaseURL:      getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/aulaflash?sslmode=disable"),
+		DatabaseURL:      getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/clarityflash?sslmode=disable"),
 		GroqAPIKey:       os.Getenv("GROQ_API_KEY"),
 		HuggingFaceToken: os.Getenv("HUGGING_FACE_TOKEN"),
 		OllamaURL:        getEnv("OLLAMA_URL", "http://localhost:11434"),
 		GroqModel:        getEnv("GROQ_MODEL", "whisper-large-v3"),
-		LLMModel:         getEnv("LLM_MODEL", "neuralmagic/Qwen2.5-72B-Instruct-quantized.w4a16"),
+		LLMModel:         getEnv("LLM_MODEL", "meta-llama/llama-3.1-8b-instruct"),
 		UploadDir:        uploadDir,
 		UseOllama:        useOllama,
 	}

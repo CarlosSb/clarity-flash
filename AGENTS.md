@@ -51,9 +51,9 @@ ClarityFlash é um assistente inteligente que grava aulas/reuniões via Chrome E
 
 ```bash
 # 1. Banco de dados
-createdb aulaflash
-psql aulaflash < backend/migrations/001_initial.sql
-psql aulaflash < backend/migrations/002_add_auth.sql
+createdb clarityflash
+psql clarityflash < backend/migrations/001_initial.sql
+psql clarityflash < backend/migrations/002_add_auth.sql
 
 # 2. Backend
 cd backend
@@ -70,19 +70,40 @@ npm run dev  # App em http://localhost:5173
 # chrome://extensions/ -> Modo desenvolvedor -> Carregar sem compactação -> extension/
 ```
 
+### CLI do Projeto (Makefile)
+
+| Comando | Descrição |
+|---|---|
+| `make -C backend run` | Executa servidor em modo desenvolvimento |
+| `make -C backend build` | Compila binário em `backend/bin/clarityflash` |
+| `make -C backend migrate` | Executa migrações do banco |
+| `make -C backend test` | Roda testes |
+| `make -C backend clean` | Remove binários e uploads temporários |
+
+### CLI do Projeto (Makefile)
+
+| Comando | Descrição |
+|---|---|
+| `make -C backend run` | Executa servidor em modo desenvolvimento |
+| `make -C backend build` | Compila binário em `backend/bin/clarityflash` |
+| `make -C backend migrate` | Executa migrações do banco |
+| `make -C backend test` | Roda testes |
+| `make -C backend clean` | Remove binários e uploads temporários |
+
 ## Status do Desenvolvimento (MVP ~80%)
 
 - ✅ Chrome Extension com captura de áudio
 - ✅ Backend API em Go
 - ✅ Upload de áudio (file + streaming)
 - ✅ Transcrição Groq Whisper Large V3
-- ✅ Geração de resumo com Llama 3.1 8B
+- ✅ Geração de resumo com Llama 3.1 8B (via Groq)
 - ✅ Geração de flashcards (10-15 cards)
 - ✅ PostgreSQL com migrações
 - ✅ WebSocket real-time
 - ✅ Vue 3 frontend
 - ✅ Auth básico (JWT + fallback)
 - ✅ Exportação CSV/TXT
+- ✅ CLI do projeto (Makefile)
 - ⚠️ Flashcard UI - testes pendentes
 - ⚠️ Modo Quiz - testes pendentes
 - ❌ Assistente IA tempo real (v1.0)

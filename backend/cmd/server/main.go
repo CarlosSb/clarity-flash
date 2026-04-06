@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/aulaflash/backend/internal/api"
 	"github.com/aulaflash/backend/internal/auth"
@@ -14,7 +13,6 @@ import (
 	"github.com/aulaflash/backend/internal/middleware"
 	postgres "github.com/aulaflash/backend/internal/repository/postgres"
 	"github.com/aulaflash/backend/internal/service"
-	"github.com/aulaflash/backend/internal/websocket"
 	"github.com/aulaflash/backend/pkg/audio"
 	"github.com/aulaflash/backend/pkg/llm"
 	"github.com/aulaflash/backend/pkg/storage"
@@ -50,26 +48,21 @@ func main() {
 	}
 
 	// Audio processor
-	audioProc, err := audio.NewProcessor(os.TempDir())
+	audioProc, err := audio.NewProcessor("/tmp")
 	if err != nil {
 		log.Fatalf("erro ao inicializar audio processor: %v", err)
 	}
 
 	// STT e LLM clients — ambos usando Groq (unificado)
-	sttClient := stt.NewGroqClient(cfg.GroqAPIKey, cfg.GroqSTTModel)
+	sttClient := stt.NewGroqClient(cfg.GroqAPIKey, cfg.GroqModel)
 
 	var llmClient llm.LLMClient
 	if cfg.UseOllama {
 		// Fallback: Ollama local (ainda disponivel se quiser alternar)
-		ollamaURL := cfg.OllamaURL
-		ollamaModel := cfg.OllamaModel
-		llmClient = llm.NewOllamaClient(ollamaURL, ollamaModel)
+		llmClient = llm.NewOllamaClient(cfg.OllamaURL, cfg.LLMModel)
 	} else {
-		llmClient = llm.NewGroqLLMClient(cfg.GroqAPIKey, cfg.GroqLLMModel)
+		llmClient = llm.NewGroqLLMClient(cfg.GroqAPIKey, cfg.LLMModel)
 	}
-
-	// WebSocket hub
-	hub := websocket.NewHub()
 
 	// Repositories
 	sessionRepo := postgres.NewSessionRepository(db)
@@ -77,29 +70,23 @@ func main() {
 	userRepo := postgres.NewUserRepository(db)
 
 	// Processor (orquestrador)
-	proc := service.NewProcessor(sessionRepo, flashcardRepo, store, audioProc, sttClient, llmClient, hub, cfg.UploadDir)
-
-	// Stream handler (recebe chunks do frontend em tempo real)
-	streamHandler := handler.NewStreamHandler(cfg.UploadDir, proc)
-	// Enable real-time transcription: Whisper -> Hub -> frontend
-	streamHandler.SetTranscriber(sttClient)
-	streamHandler.SetPusher(hub)
+	proc := service.NewProcessor(sessionRepo, flashcardRepo, store, audioProc, sttClient, llmClient)
 
 	// JWT & Auth
-	jwtSecret := os.Getenv("JWT_SECRET")
+	jwtSecret := cfg.HuggingFaceToken // Usando como fallback se JWT_SECRET não estiver setado
 	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET environment variable is required")
+		jwtSecret = "dev_secret_key_change_in_production"
 	}
 	tokenService := auth.NewTokenService(jwtSecret)
 	authSvc := service.NewAuthService(userRepo)
 	authHandler := handler.NewAuthHandler(authSvc, tokenService)
 
 	// Handlers
-	sessionHandler := handler.NewSessionHandler(proc, userRepo)
+	sessionHandler := handler.NewSessionHandler(proc)
 	exportHandler := handler.NewExportHandler(proc)
 
 	// Router com middleware
-	mux := middleware.CORS(api.SetupRouter(sessionHandler, authHandler, tokenService, exportHandler, streamHandler, hub))
+	mux := middleware.CORS(api.SetupRouter(sessionHandler, authHandler, tokenService, exportHandler))
 
 	addr := fmt.Sprintf(":%d", cfg.ServerPort)
 	log.Printf("Servidor rodando em http://localhost%s", addr)
