@@ -7,19 +7,20 @@ import (
 
 // Session representa uma gravacao de aula/reuniao
 type Session struct {
-	ID           string         `json:"id"`
-	UserID       string         `json:"user_id"`
-	Title        string         `json:"title"`
-	Description  string         `json:"description"`
-	Duration     int            `json:"duration"` // segundos
-	Status       string         `json:"status"`   // processing, completed, failed
-	Mode         string         `json:"mode"`     // student, professional
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	UpdatedAt    sql.NullTime   `json:"updated_at"`
-	Transcript   sql.NullString `json:"-"`
-	AudioPath    sql.NullString `json:"-"`
-	SummaryData  sql.NullString `json:"-"`
-	FlashcardData sql.NullString `json:"-"`
+	ID             string         `json:"id"`
+	UserID         string         `json:"user_id"`
+	Title          string         `json:"title"`
+	Description    string         `json:"description"`
+	Duration       int            `json:"duration"` // segundos
+	Status         string         `json:"status"`   // processing, completed, failed
+	Mode           string         `json:"mode"`     // student, professional
+	CreatedAt      sql.NullTime   `json:"created_at"`
+	UpdatedAt      sql.NullTime   `json:"updated_at"`
+	FlashcardCount int            `json:"flashcard_count"`
+	Transcript     sql.NullString `json:"-"`
+	AudioPath      sql.NullString `json:"-"`
+	SummaryData    sql.NullString `json:"-"`
+	FlashcardData  sql.NullString `json:"-"`
 }
 
 // SessionRepository define as operacoes de sessao no banco
