@@ -2,11 +2,10 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/aulaflash/backend/internal/auth"
 	"github.com/aulaflash/backend/internal/domain/repository"
+	"github.com/gofiber/fiber/v3"
 )
 
 type AuthService interface {
@@ -38,43 +37,49 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+
+
+// FiberRegister is the Fiber version of Register
+func (h *AuthHandler) FiberRegister(c fiber.Ctx) error {
 	var req RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"corpo da requisicao invalido"}`, http.StatusBadRequest)
-		return
+	if err := c.Bind().Body(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "corpo da requisicao invalido",
+		})
 	}
 
 	if req.Email == "" || req.Password == "" {
-		http.Error(w, `{"error":"email e senha obrigatorios"}`, http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "email e senha obrigatorios",
+		})
 	}
 
 	if req.Mode == "" {
 		req.Mode = "student"
 	}
 
-	user, err := h.authService.Register(r.Context(), req.Name, req.Email, req.Password, req.Mode)
+	user, err := h.authService.Register(c.Context(), req.Name, req.Email, req.Password, req.Mode)
 	if err != nil {
 		if err.Error() == "user already exists" {
-			http.Error(w, `{"error":"usuario ja existe com este email"}`, http.StatusConflict)
-			return
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "usuario ja existe com este email",
+			})
 		}
-		http.Error(w, `{"error":"erro ao registrar usuario"}`, http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao registrar usuario",
+		})
 	}
 
 	token, err := h.tokenService.GenerateAccessToken(user.ID, user.Email)
 	if err != nil {
-		http.Error(w, `{"error":"erro ao gerar token"}`, http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao gerar token",
+		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]any{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"token": token,
-		"user": map[string]any{
+		"user": fiber.Map{
 			"id":    user.ID,
 			"name":  user.Name,
 			"email": user.Email,
@@ -83,34 +88,40 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+
+
+// FiberLogin is the Fiber version of Login
+func (h *AuthHandler) FiberLogin(c fiber.Ctx) error {
 	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"corpo da requisicao invalido"}`, http.StatusBadRequest)
-		return
+	if err := c.Bind().Body(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "corpo da requisicao invalido",
+		})
 	}
 
 	if req.Email == "" || req.Password == "" {
-		http.Error(w, `{"error":"email e senha obrigatorios"}`, http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "email e senha obrigatorios",
+		})
 	}
 
-	user, err := h.authService.Login(r.Context(), req.Email, req.Password)
+	user, err := h.authService.Login(c.Context(), req.Email, req.Password)
 	if err != nil {
-		http.Error(w, `{"error":"email ou senha incorretos"}`, http.StatusUnauthorized)
-		return
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "email ou senha incorretos",
+		})
 	}
 
 	token, err := h.tokenService.GenerateAccessToken(user.ID, user.Email)
 	if err != nil {
-		http.Error(w, `{"error":"erro ao gerar token"}`, http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao gerar token",
+		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	return c.JSON(fiber.Map{
 		"token": token,
-		"user": map[string]any{
+		"user": fiber.Map{
 			"id":    user.ID,
 			"name":  user.Name,
 			"email": user.Email,

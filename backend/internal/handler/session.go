@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
-	"net/http"
-
 	"github.com/aulaflash/backend/internal/domain/repository"
 	"github.com/aulaflash/backend/internal/service"
+	"github.com/gofiber/fiber/v3"
 )
 
 // SessionHandler lida com HTTP requests de sessoes
@@ -17,27 +15,31 @@ func NewSessionHandler(processor *service.Processor) *SessionHandler {
 	return &SessionHandler{processor: processor}
 }
 
-// Upload recebe o audio e inicia o processamento
-// POST /api/sessions/upload
-func (h *SessionHandler) Upload(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(50 << 20); err != nil { // 50MB max no form
-		http.Error(w, "erro ao ler formulario", http.StatusBadRequest)
-		return
-	}
 
-	file, header, err := r.FormFile("audio")
+
+// FiberUpload is the Fiber version of Upload
+func (h *SessionHandler) FiberUpload(c fiber.Ctx) error {
+	file, err := c.FormFile("audio")
 	if err != nil {
-		http.Error(w, "arquivo nao encontrado", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "arquivo nao encontrado",
+		})
 	}
-	defer file.Close()
 
-	userID := r.FormValue("user_id")
-	if userID == "" {
+	src, err := file.Open()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao abrir arquivo",
+		})
+	}
+	defer src.Close()
+
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
 		userID = "anonymous"
 	}
 
-	mode := r.FormValue("mode")
+	mode := string(c.FormValue("mode"))
 	if mode == "" {
 		mode = "student"
 	}
@@ -45,76 +47,82 @@ func (h *SessionHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	// Cria sessao no banco
 	session := &repository.Session{
 		UserID: userID,
-		Title:  header.Filename,
+		Title:  file.Filename,
 		Mode:   mode,
 		Status: "processing",
 	}
 
-	if err := h.processor.Process(r.Context(), session, file, header); err != nil {
-		http.Error(w, "erro ao processar audio: "+err.Error(), http.StatusInternalServerError)
-		return
+  if err := h.processor.Process(c.Context(), session, src, file); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao processar audio: " + err.Error(),
+		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message":    "audio recebido com sucesso",
 		"session_id": session.ID,
 		"status":     session.Status,
 	})
 }
 
-// GetByID retorna uma sessao com seus dados processados
-// GET /api/sessions/:id
-func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+
+
+// FiberGetByID is the Fiber version of GetByID
+func (h *SessionHandler) FiberGetByID(c fiber.Ctx) error {
+	id := c.Params("id")
 	if id == "" {
-		http.Error(w, "id obrigatorio", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "id obrigatorio",
+		})
 	}
 
-	session, err := h.processor.GetSession(r.Context(), id)
+	session, err := h.processor.GetSession(c.Context(), id)
 	if err != nil {
-		http.Error(w, "sessao nao encontrada", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "sessao nao encontrada",
+		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(session)
+	return c.JSON(session)
 }
 
-// ListByUser retorna todas as sessoes de um usuario
-// GET /api/sessions?user_id=xxx
-func (h *SessionHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
-		http.Error(w, "user_id obrigatorio", http.StatusBadRequest)
-		return
+
+
+// FiberListByUser is the Fiber version of ListByUser
+func (h *SessionHandler) FiberListByUser(c fiber.Ctx) error {
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user_id obrigatorio",
+		})
 	}
 
-	sessions, err := h.processor.ListSessions(r.Context(), userID)
+	sessions, err := h.processor.ListSessions(c.Context(), userID)
 	if err != nil {
-		http.Error(w, "erro ao listar sessoes", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao listar sessoes",
+		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sessions)
+	return c.JSON(sessions)
 }
 
-// Delete remove uma sessao e seus dados
-// DELETE /api/sessions/:id
-func (h *SessionHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+
+
+// FiberDelete is the Fiber version of Delete
+func (h *SessionHandler) FiberDelete(c fiber.Ctx) error {
+	id := c.Params("id")
 	if id == "" {
-		http.Error(w, "id obrigatorio", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "id obrigatorio",
+		})
 	}
 
-	if err := h.processor.DeleteSession(r.Context(), id); err != nil {
-		http.Error(w, "erro ao deletar sessao", http.StatusInternalServerError)
-		return
+	if err := h.processor.DeleteSession(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "erro ao deletar sessao",
+		})
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	return c.SendStatus(fiber.StatusNoContent)
 }

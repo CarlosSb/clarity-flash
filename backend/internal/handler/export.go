@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/csv"
-	"net/http"
 	"strings"
 
 	"github.com/aulaflash/backend/internal/service"
+	"github.com/gofiber/fiber/v3"
 )
 
 // ExportHandler lida com exportacao de flashcards
@@ -17,25 +17,29 @@ func NewExportHandler(processor *service.Processor) *ExportHandler {
 	return &ExportHandler{processor: processor}
 }
 
-// ExportCSV exporta flashcards em formato CSV (compativel com Anki)
-// GET /api/export/:id/csv
-func (h *ExportHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
-	sessionID := r.PathValue("id")
+
+
+// FiberExportCSV is the Fiber version of ExportCSV
+func (h *ExportHandler) FiberExportCSV(c fiber.Ctx) error {
+	sessionID := c.Params("id")
 	if sessionID == "" {
-		http.Error(w, "id obrigatorio", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "id obrigatorio",
+		})
 	}
 
-	cards, err := h.processor.GetFlashcards(r.Context(), sessionID)
+	cards, err := h.processor.GetFlashcards(c.Context(), sessionID)
 	if err != nil {
-		http.Error(w, "flashcards nao encontrados", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "flashcards nao encontrados",
+		})
 	}
 
-	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-	w.Header().Set("Content-Disposition", "attachment; filename=flashcards.csv")
+	c.Set("Content-Type", "text/csv; charset=utf-8")
+	c.Set("Content-Disposition", "attachment; filename=flashcards.csv")
 
-	writer := csv.NewWriter(w)
+	var csvContent strings.Builder
+	writer := csv.NewWriter(&csvContent)
 	writer.Write([]string{"Front", "Back", "Difficulty"})
 
 	for _, card := range cards {
@@ -43,29 +47,36 @@ func (h *ExportHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writer.Flush()
+	return c.SendString(csvContent.String())
 }
 
-// ExportText exporta flashcards em texto simples
-// GET /api/export/:id/txt
-func (h *ExportHandler) ExportText(w http.ResponseWriter, r *http.Request) {
-	sessionID := r.PathValue("id")
+
+
+// FiberExportText is the Fiber version of ExportText
+func (h *ExportHandler) FiberExportText(c fiber.Ctx) error {
+	sessionID := c.Params("id")
 	if sessionID == "" {
-		http.Error(w, "id obrigatorio", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "id obrigatorio",
+		})
 	}
 
-	cards, err := h.processor.GetFlashcards(r.Context(), sessionID)
+	cards, err := h.processor.GetFlashcards(c.Context(), sessionID)
 	if err != nil {
-		http.Error(w, "flashcards nao encontrados", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "flashcards nao encontrados",
+		})
 	}
 
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Header().Set("Content-Disposition", "attachment; filename=flashcards.txt")
+	c.Set("Content-Type", "text/plain; charset=utf-8")
+	c.Set("Content-Disposition", "attachment; filename=flashcards.txt")
 
+	var txtContent strings.Builder
 	for i, card := range cards {
-		w.Write([]byte(formatCard(i, card)))
+		txtContent.WriteString(formatCard(i, card))
 	}
+
+	return c.SendString(txtContent.String())
 }
 
 func difficultyLabel(d int) string {

@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"encoding/json"
-	"net/http"
+	"github.com/gofiber/fiber/v3"
 )
 
 // HealthHandler health check do servidor
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+func HealthHandler(c fiber.Ctx) error {
+	return c.JSON(fiber.Map{
 		"status":  "ok",
 		"service": "aulaflash",
 	})
 }
+
+
