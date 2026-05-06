@@ -21,12 +21,12 @@ import (
 // 1. Recebe áudio → 2. Salva arquivo → 3. Transcreve fala → 4. Gera resumo → 5. Cria flashcards
 // Tudo roda em background para não bloquear o usuário
 type Processor struct {
-	sessionRepo   repository.SessionRepository // Acesso ao banco (sessões)
+	sessionRepo   repository.SessionRepository   // Acesso ao banco (sessões)
 	flashcardRepo repository.FlashcardRepository // Acesso ao banco (flashcards)
-	storage       *storage.LocalStorage         // Sistema de arquivos local
-	audioProc     *audio.Processor              // Processamento de áudio (conversão)
-	sttClient     *stt.GroqClient               // IA de fala para texto (Whisper)
-	llmClient     llm.LLMClient                 // IA de texto (Llama) para resumos/flashcards
+	storage       *storage.LocalStorage          // Sistema de arquivos local
+	audioProc     *audio.Processor               // Processamento de áudio (conversão)
+	sttClient     *stt.GroqClient                // IA de fala para texto (Whisper)
+	llmClient     llm.LLMClient                  // IA de texto (Llama) para resumos/flashcards
 }
 
 func NewProcessor(
@@ -224,8 +224,8 @@ func generateID() (string, error) {
 // Exemplo: "Aqui está seu JSON: {"nome": "João"} Espero que ajude!"
 // Retorna: {"nome": "João"}
 func extractJSON(s string) string {
-	start := -1  // Posição onde começa o JSON
-	depth := 0   // Profundidade das chaves (para JSONs aninhados)
+	start := -1 // Posição onde começa o JSON
+	depth := 0  // Profundidade das chaves (para JSONs aninhados)
 
 	// Percorrer cada caractere da string
 	for i, c := range s {

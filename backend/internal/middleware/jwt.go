@@ -8,8 +8,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-
-
 // contextKey is an unexported type for context keys
 type contextKey string
 

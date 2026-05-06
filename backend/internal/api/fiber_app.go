@@ -13,9 +13,9 @@ import (
 // e os guardas de segurança (middlewares) da nossa aplicação
 func SetupFiberApp(
 	sessionHandler *handler.SessionHandler, // Gerencia sessões de áudio
-	authHandler *handler.AuthHandler,       // Gerencia autenticação (login/register)
-	tokenService *auth.TokenService,        // Serviço para gerar/verificar tokens JWT
-	exportHandler *handler.ExportHandler,   // Gerencia exportação de flashcards
+	authHandler *handler.AuthHandler, // Gerencia autenticação (login/register)
+	tokenService *auth.TokenService, // Serviço para gerar/verificar tokens JWT
+	exportHandler *handler.ExportHandler, // Gerencia exportação de flashcards
 ) *fiber.App {
 	// Criamos uma nova aplicação Fiber com configuração personalizada
 	app := fiber.New(fiber.Config{
@@ -48,14 +48,14 @@ func SetupFiberApp(
 	protected := app.Group("", JWTOrFallbackAuth(tokenService, "X-User-ID"))
 
 	// 📤 Rotas de sessão - gerenciar gravações de áudio
-	protected.Post("/api/sessions/upload", sessionHandler.FiberUpload)     // Upload de áudio
-	protected.Get("/api/sessions/:id", sessionHandler.FiberGetByID)        // Ver detalhes de uma sessão
-	protected.Get("/api/sessions", sessionHandler.FiberListByUser)         // Listar sessões do usuário
-	protected.Delete("/api/sessions/:id", sessionHandler.FiberDelete)      // Deletar sessão
+	protected.Post("/api/sessions/upload", sessionHandler.FiberUpload) // Upload de áudio
+	protected.Get("/api/sessions/:id", sessionHandler.FiberGetByID)    // Ver detalhes de uma sessão
+	protected.Get("/api/sessions", sessionHandler.FiberListByUser)     // Listar sessões do usuário
+	protected.Delete("/api/sessions/:id", sessionHandler.FiberDelete)  // Deletar sessão
 
 	// 📊 Rotas de exportação - baixar flashcards em diferentes formatos
-	protected.Get("/api/export/:id/csv", exportHandler.FiberExportCSV)    // CSV para Anki
-	protected.Get("/api/export/:id/txt", exportHandler.FiberExportText)   // Texto simples
+	protected.Get("/api/export/:id/csv", exportHandler.FiberExportCSV)  // CSV para Anki
+	protected.Get("/api/export/:id/txt", exportHandler.FiberExportText) // Texto simples
 
 	return app
 }

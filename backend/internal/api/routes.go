@@ -1,7 +1,5 @@
 package api
 
-
-
 // Routes documenta todas as rotas disponiveis no servidor Fiber
 var Routes = []Route{
 	{Method: "GET", Path: "/health", Desc: "Health check"},

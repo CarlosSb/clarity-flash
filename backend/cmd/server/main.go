@@ -71,9 +71,9 @@ func main() {
 	}
 
 	// 📊 PASSO 6: Inicializar repositórios (acesso ao banco)
-	sessionRepo := postgres.NewSessionRepository(db)    // CRUD de sessões
+	sessionRepo := postgres.NewSessionRepository(db)     // CRUD de sessões
 	flashcardRepo := postgres.NewFlashcardRepository(db) // CRUD de flashcards
-	userRepo := postgres.NewUserRepository(db)          // CRUD de usuários
+	userRepo := postgres.NewUserRepository(db)           // CRUD de usuários
 
 	// 🎼 PASSO 7: Criar o "maestro" - Processor que orquestra tudo
 	proc := service.NewProcessor(sessionRepo, flashcardRepo, store, audioProc, sttClient, llmClient)
@@ -88,8 +88,8 @@ func main() {
 	authHandler := handler.NewAuthHandler(authSvc, tokenService)
 
 	// 🎯 PASSO 9: Criar handlers HTTP (controladores das rotas)
-	sessionHandler := handler.NewSessionHandler(proc)    // /api/sessions/*
-	exportHandler := handler.NewExportHandler(proc)      // /api/export/*
+	sessionHandler := handler.NewSessionHandler(proc) // /api/sessions/*
+	exportHandler := handler.NewExportHandler(proc)   // /api/export/*
 
 	// 🚀 PASSO 10: Montar aplicação Fiber com todas as rotas
 	app := api.SetupFiberApp(sessionHandler, authHandler, tokenService, exportHandler)

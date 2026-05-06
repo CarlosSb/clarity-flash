@@ -37,8 +37,6 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-
-
 // FiberRegister is the Fiber version of Register
 func (h *AuthHandler) FiberRegister(c fiber.Ctx) error {
 	var req RegisterRequest
@@ -87,8 +85,6 @@ func (h *AuthHandler) FiberRegister(c fiber.Ctx) error {
 		},
 	})
 }
-
-
 
 // FiberLogin is the Fiber version of Login
 func (h *AuthHandler) FiberLogin(c fiber.Ctx) error {

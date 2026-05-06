@@ -15,8 +15,6 @@ func NewSessionHandler(processor *service.Processor) *SessionHandler {
 	return &SessionHandler{processor: processor}
 }
 
-
-
 // FiberUpload - Handler para upload de áudio
 // Esta é a função mais importante! Recebe o arquivo de áudio e inicia
 // todo o processo de IA (transcrição, resumo, flashcards)
@@ -57,10 +55,10 @@ func (h *SessionHandler) FiberUpload(c fiber.Ctx) error {
 	// 💾 PASSO 5: Criar registro da sessão no banco
 	// Antes mesmo de processar, salvamos que uma sessão começou
 	session := &repository.Session{
-		UserID: userID,           // Quem enviou
-		Title:  file.Filename,    // Nome do arquivo como título
-		Mode:   mode,             // Modo de uso
-		Status: "processing",     // Status inicial: processando
+		UserID: userID,        // Quem enviou
+		Title:  file.Filename, // Nome do arquivo como título
+		Mode:   mode,          // Modo de uso
+		Status: "processing",  // Status inicial: processando
 	}
 
 	// 🤖 PASSO 6: Iniciar processamento com IA
@@ -76,12 +74,10 @@ func (h *SessionHandler) FiberUpload(c fiber.Ctx) error {
 	// Retornar informações da sessão criada
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message":    "audio recebido com sucesso",
-		"session_id": session.ID,    // ID único da sessão (gerado automaticamente)
+		"session_id": session.ID,     // ID único da sessão (gerado automaticamente)
 		"status":     session.Status, // "processing" inicialmente
 	})
 }
-
-
 
 // FiberGetByID is the Fiber version of GetByID
 func (h *SessionHandler) FiberGetByID(c fiber.Ctx) error {
@@ -102,8 +98,6 @@ func (h *SessionHandler) FiberGetByID(c fiber.Ctx) error {
 	return c.JSON(session)
 }
 
-
-
 // FiberListByUser is the Fiber version of ListByUser
 func (h *SessionHandler) FiberListByUser(c fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(string)
@@ -122,8 +116,6 @@ func (h *SessionHandler) FiberListByUser(c fiber.Ctx) error {
 
 	return c.JSON(sessions)
 }
-
-
 
 // FiberDelete is the Fiber version of Delete
 func (h *SessionHandler) FiberDelete(c fiber.Ctx) error {

@@ -8,12 +8,12 @@ import (
 )
 
 type User struct {
-	ID            string       `json:"id"`
-	Name          string       `json:"name"`
-	Email         string       `json:"email"`
-	PasswordHash  string       `json:"-"`
-	Mode          string       `json:"mode"` // student, professional
-	CreatedAt     sql.NullTime `json:"created_at"`
+	ID           string       `json:"id"`
+	Name         string       `json:"name"`
+	Email        string       `json:"email"`
+	PasswordHash string       `json:"-"`
+	Mode         string       `json:"mode"` // student, professional
+	CreatedAt    sql.NullTime `json:"created_at"`
 }
 
 // SetPassword hashes and stores the password

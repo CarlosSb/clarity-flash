@@ -13,10 +13,10 @@ type Flashcard struct {
 // FlashcardDeck - Um baralho completo de flashcards
 // Agrupa vários cartões relacionados a uma mesma aula/sessão
 type FlashcardDeck struct {
-	SessionID   string      `json:"session_id"`   // ID da sessão que gerou estes cartões
-	Title       string      `json:"title"`        // Título do deck (opcional)
-	Description string      `json:"description"`  // Descrição do conteúdo (opcional)
-	Cards       []Flashcard `json:"cards"`        // Lista de 10-15 cartões gerados
+	SessionID   string      `json:"session_id"`  // ID da sessão que gerou estes cartões
+	Title       string      `json:"title"`       // Título do deck (opcional)
+	Description string      `json:"description"` // Descrição do conteúdo (opcional)
+	Cards       []Flashcard `json:"cards"`       // Lista de 10-15 cartões gerados
 }
 
 // FlashcardPrompt - Cria instruções para a IA gerar flashcards de qualidade

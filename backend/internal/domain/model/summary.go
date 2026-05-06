@@ -5,12 +5,12 @@ import "fmt"
 // Summary - Estrutura do resumo inteligente gerado pela IA
 // Esta struct representa o resultado final da análise de uma aula/reunião
 type Summary struct {
-	Title         string   `json:"title"`         // Título gerado automaticamente
-	Description   string   `json:"description"`   // Resumo executivo (2-3 frases)
-	Highlights    []string `json:"highlights"`    // Pontos principais (bullet points)
-	Decisions     []string `json:"decisions"`     // Decisões tomadas (para reuniões)
-	ActionItems   []string `json:"action_items"`   // Tarefas a fazer (follow-ups)
-	KeyConcepts   []string `json:"key_concepts"`   // Conceitos importantes aprendidos
+	Title       string   `json:"title"`        // Título gerado automaticamente
+	Description string   `json:"description"`  // Resumo executivo (2-3 frases)
+	Highlights  []string `json:"highlights"`   // Pontos principais (bullet points)
+	Decisions   []string `json:"decisions"`    // Decisões tomadas (para reuniões)
+	ActionItems []string `json:"action_items"` // Tarefas a fazer (follow-ups)
+	KeyConcepts []string `json:"key_concepts"` // Conceitos importantes aprendidos
 }
 
 // SummaryPrompt - Cria o "comando" enviado para a IA gerar resumos

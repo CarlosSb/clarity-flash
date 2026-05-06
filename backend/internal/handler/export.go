@@ -17,8 +17,6 @@ func NewExportHandler(processor *service.Processor) *ExportHandler {
 	return &ExportHandler{processor: processor}
 }
 
-
-
 // FiberExportCSV is the Fiber version of ExportCSV
 func (h *ExportHandler) FiberExportCSV(c fiber.Ctx) error {
 	sessionID := c.Params("id")
@@ -49,8 +47,6 @@ func (h *ExportHandler) FiberExportCSV(c fiber.Ctx) error {
 	writer.Flush()
 	return c.SendString(csvContent.String())
 }
-
-
 
 // FiberExportText is the Fiber version of ExportText
 func (h *ExportHandler) FiberExportText(c fiber.Ctx) error {

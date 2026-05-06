@@ -11,5 +11,3 @@ func HealthHandler(c fiber.Ctx) error {
 		"service": "aulaflash",
 	})
 }
-
-
