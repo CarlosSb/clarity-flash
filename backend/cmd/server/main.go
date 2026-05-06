@@ -4,13 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/aulaflash/backend/internal/api"
 	"github.com/aulaflash/backend/internal/auth"
 	"github.com/aulaflash/backend/internal/config"
 	"github.com/aulaflash/backend/internal/handler"
-	"github.com/aulaflash/backend/internal/middleware"
 	postgres "github.com/aulaflash/backend/internal/repository/postgres"
 	"github.com/aulaflash/backend/internal/service"
 	"github.com/aulaflash/backend/pkg/audio"
@@ -85,10 +83,10 @@ func main() {
 	sessionHandler := handler.NewSessionHandler(proc)
 	exportHandler := handler.NewExportHandler(proc)
 
-	// Router com middleware
-	mux := middleware.CORS(api.SetupRouter(sessionHandler, authHandler, tokenService, exportHandler))
+	// Fiber app
+	app := api.SetupFiberApp(sessionHandler, authHandler, tokenService, exportHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.ServerPort)
 	log.Printf("Servidor rodando em http://localhost%s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Fatal(app.Listen(addr))
 }
