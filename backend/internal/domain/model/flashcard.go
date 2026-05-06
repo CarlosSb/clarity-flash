@@ -2,22 +2,25 @@ package model
 
 import "fmt"
 
-// Flashcard representa um cartao de estudo com frente e verso
+// Flashcard - O cartão de estudo individual
+// Cada flashcard é como um mini-teste: pergunta na frente, resposta atrás
 type Flashcard struct {
-	Front    string `json:"front"`
-	Back     string `json:"back"`
-	Difficulty int  `json:"difficulty"` // 1=facil, 2=medio, 3=dficil
+	Front      string `json:"front"`      // Pergunta (ex: "O que é polimorfismo?")
+	Back       string `json:"back"`       // Resposta (ex: "Capacidade de um objeto assumir várias formas")
+	Difficulty int    `json:"difficulty"` // 1=fácil, 2=médio, 3=difícil (para algoritmos de repetição)
 }
 
-// FlashcardDeck representa um conjunto de flashcards
+// FlashcardDeck - Um baralho completo de flashcards
+// Agrupa vários cartões relacionados a uma mesma aula/sessão
 type FlashcardDeck struct {
-	SessionID   string      `json:"session_id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Cards       []Flashcard `json:"cards"`
+	SessionID   string      `json:"session_id"`   // ID da sessão que gerou estes cartões
+	Title       string      `json:"title"`        // Título do deck (opcional)
+	Description string      `json:"description"`  // Descrição do conteúdo (opcional)
+	Cards       []Flashcard `json:"cards"`        // Lista de 10-15 cartões gerados
 }
 
-// FlashcardPrompt gera o prompt para gerar flashcards em PT-BR
+// FlashcardPrompt - Cria instruções para a IA gerar flashcards de qualidade
+// Esta função "ensina" a IA como criar boas flashcards de estudo
 func FlashcardPrompt(transcript string) string {
 	return fmt.Sprintf(`Voce e um especialista em criacao de flashcards para estudo.
 Com base na transcricao abaixo, crie exatamente 10-15 flashcards em portugues brasileiro.

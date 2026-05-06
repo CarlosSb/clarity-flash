@@ -2,17 +2,20 @@ package model
 
 import "fmt"
 
-// Summary representa o resumo gerado por IA de uma sessao
+// Summary - Estrutura do resumo inteligente gerado pela IA
+// Esta struct representa o resultado final da análise de uma aula/reunião
 type Summary struct {
-	Title         string   `json:"title"`
-	Description   string   `json:"description"`
-	Highlights    []string `json:"highlights"`
-	Decisions     []string `json:"decisions"`
-	ActionItems   []string `json:"action_items"`
-	KeyConcepts   []string `json:"key_concepts"`
+	Title         string   `json:"title"`         // Título gerado automaticamente
+	Description   string   `json:"description"`   // Resumo executivo (2-3 frases)
+	Highlights    []string `json:"highlights"`    // Pontos principais (bullet points)
+	Decisions     []string `json:"decisions"`     // Decisões tomadas (para reuniões)
+	ActionItems   []string `json:"action_items"`   // Tarefas a fazer (follow-ups)
+	KeyConcepts   []string `json:"key_concepts"`   // Conceitos importantes aprendidos
 }
 
-// SummaryPrompt gera o prompt de sistema para geracao de resumo em PT-BR
+// SummaryPrompt - Cria o "comando" enviado para a IA gerar resumos
+// Esta função cria um prompt muito específico que "ensina" a IA como
+// analisar transcrições em português brasileiro e gerar resumos estruturados
 func SummaryPrompt(transcript string) string {
 	return fmt.Sprintf(`Voce e um assistente especializado em analisar transcricoes de aulas e reunioes em portugues brasileiro.
 Analise a transcricao abaixo e gere um resumo profissional seguindo EXATAMENTE o formato JSON.
